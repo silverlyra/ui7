@@ -1,6 +1,6 @@
 {
   "name": "uuid7",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "description": "Generate sortable, timestamped UUID's, based on the new-uuid-format-04 RFC draft",
   "type": "module",
@@ -26,7 +26,7 @@
     "lint:check": "eslint \"src/**/*.{js,ts,tsx}\" --max-warnings=0",
     "fmt": "prettier --write src shim",
     "fmt:check": "prettier --check src shim",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run check && npm run build"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.38.0",
