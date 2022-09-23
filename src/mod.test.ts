@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import uuid, { ParseError, pattern, timestamp } from './mod';
+import uuid, { generator, ParseError, pattern, timestamp } from './mod';
 
 test('generates the RFC example UUID', (t) => {
   const time = 0x17f22e279b0;
@@ -26,6 +26,16 @@ test('generates UUIDs with the current timestamp', (t) => {
   const [now, id] = [Date.now(), uuid()];
 
   t.is(timestamp(id), now);
+});
+
+test('generates monotonic UUIDs', (t) => {
+  const uuid = generator({ time: () => 0 });
+
+  const ids = [...Array(2 ** 11)].map(uuid);
+  t.is(pattern.test(ids[0]), true);
+
+  const sorted = [...ids].sort();
+  t.deepEqual(ids, sorted);
 });
 
 test('parses the timestamp field', (t) => {

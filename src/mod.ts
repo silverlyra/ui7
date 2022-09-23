@@ -7,7 +7,7 @@
  * `Date` object to this function.
  *
  * You can also further customize UUID generation by providing
- * {@link GenerateOptions an object} with your preferences:
+ * {@link Options an object} with your preferences:
  *
  * - `time`:    Generate with this time instead of the current system time. You can
  *              provide a `number` millisecond-precision UNIX timestamp (as `Date.now`
@@ -20,12 +20,12 @@
  *              a `Uint8Array` containing 10 bytes.
  *              (default: uses `crypto.getRandomValues`)
  */
-export const v7: Generator = (opt?: Clock | Time | GenerateOptions | null): string => {
+export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
   const time = getTime(opt);
   let dashes = true;
   let upper = false;
   let version = 7 << 4;
-  let rand: () => Uint8Array = defaultEntropy;
+  let rand: EntropySource = random;
 
   if (typeof opt === 'object' && opt !== null && !(opt instanceof Date)) {
     if (opt.dashes != null) dashes = opt.dashes;
@@ -38,7 +38,7 @@ export const v7: Generator = (opt?: Clock | Time | GenerateOptions | null): stri
   if (dashes) timestamp = timestamp.slice(0, 8) + '-' + timestamp.slice(8);
 
   const suffixBytes: string[] = Array(10);
-  rand().forEach((b, i) => {
+  rand(time).forEach((b, i) => {
     if (i === 0) {
       b = version | (b & 0x0f);
     } else if (i === 2) {
@@ -57,6 +57,26 @@ export const v7: Generator = (opt?: Clock | Time | GenerateOptions | null): stri
 };
 
 export default v7;
+
+/**
+ * Create a UUID generator. By default, uses a {@link monotonic} entropy source. Accepts the same options as the default generator.
+ */
+export const generator = (options?: GeneratorOptions): Generator => {
+  options = {
+    entropy: monotonic(),
+    ...options,
+  };
+
+  return (opt?: Clock | Time | Options | null) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    if (opt == null) return v7(options!);
+
+    if (opt instanceof Date || typeof opt === 'number' || typeof opt === 'function')
+      return v7({ ...options, time: opt });
+
+    return v7({ ...options, ...opt });
+  };
+};
 
 /**
  * Return the timestamp portion of the UUID (a millisecond-precision UNIX
@@ -89,8 +109,8 @@ export interface Generator {
   /** Generate a UUIDv7 using the given time as its timestamp. */
   (time: Clock | Time | null | undefined): string;
 
-  /** Generate a UUIDv7 using the given {@link GenerateOptions options}. */
-  (options: GenerateOptions): string;
+  /** Generate a UUIDv7 using the given {@link Options options}. */
+  (options: Options): string;
 }
 
 /**
@@ -103,7 +123,7 @@ export type Clock = typeof Date['now'];
 export type Time = number | Date;
 
 /** {@link v7 UUID generation} options. */
-export interface GenerateOptions {
+export interface Options extends FormatOptions {
   /**
    * Set the timestamp portion of the UUID to the given `Date`, UNIX timestamp
    * (as returned by `Date.now`), or the timestamp returned by the given
@@ -111,6 +131,27 @@ export interface GenerateOptions {
    */
   time?: Clock | Time;
 
+  /**
+   * Generate the random part of the UUID. The returned `Uint8Array` must be at
+   * least 10 bytes long.
+   */
+  entropy?: EntropySource;
+}
+
+/** Configures a UUID {@link generator}. */
+export interface GeneratorOptions extends FormatOptions {
+  /** Use a different timestamp source than `Date.now`. */
+  time?: Clock;
+
+  /**
+   * Generate the random part of the UUID. The returned `Uint8Array` must be at
+   * least 10 bytes long.
+   */
+  entropy?: EntropySource;
+}
+
+/** Configures how a generated UUID is formatted. */
+export interface FormatOptions {
   /**
    * `true` to include dashes in the UUID; `false` to omit them.
    * (default: `true`)
@@ -120,22 +161,72 @@ export interface GenerateOptions {
   /** Capitalize the A-F characters in the UUID. (default: `false`) */
   upper?: boolean;
 
-  /** Set the version field of the UUID. (default: `8`) */
+  /** Set the version field of the UUID. (default: `7`) */
   version?: 7 | 8;
-
-  /**
-   * Generate the random part of the UUID. The returned `Uint8Array` must be at
-   * least 10 bytes long.
-   */
-  entropy?: () => Uint8Array;
 }
+
+/**
+ * A source for the `rand` fields of a UUID.
+ *
+ * Must return a `Uint8Array` of 10 bytes.
+ */
+export type EntropySource = (timestamp: number) => Uint8Array;
+
+/**
+ * Fill the UUID's `rand` fields with random bits, using
+ * [`getRandomValues`][random]. UUID's produced with this randomness source are
+ * not monotonic; ID's produced within the same millisecond will not necessarily
+ * be sortable in the order they were produced.
+ *
+ * [random]: https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
+ */
+export const random = () => crypto.getRandomValues(new Uint8Array(10));
+
+/**
+ * Return an entropy source that allocates 12 bits as a monotonic counter at the
+ * start of the UUIDv7 random fields.
+ *
+ * When a new timestamp is rolled over, the high bit of this field is set to
+ * `0`. In the "unluckiest" case where the initial random counter value is
+ * `0x7FF`, 2048 counter values are available within the same (millisecond)
+ * timestamp value before exhaustion.
+ *
+ * **Note:** This package does not currently handle overflow of the counter
+ * field; after `0xFFF`, the next value is `0x000`.
+ */
+export const monotonic = (): EntropySource => {
+  const bytes = new Uint8Array(10);
+  const entropy = new Uint8Array(bytes.buffer, 2, 8);
+
+  let lastTimestamp = 0;
+  let seq: number | undefined;
+
+  return (timestamp) => {
+    if (timestamp > lastTimestamp) {
+      crypto.getRandomValues(bytes);
+      bytes[0] &= 0x07;
+
+      lastTimestamp = timestamp;
+      seq = undefined;
+    } else {
+      if (seq === undefined) seq = ((bytes[0] & 0x0f) << 8) | bytes[1];
+      seq++; // TODO: handle overflow
+
+      crypto.getRandomValues(entropy);
+      bytes[0] = (seq >> 8) & 0xff;
+      bytes[1] = seq & 0xff;
+    }
+
+    return bytes;
+  };
+};
 
 /** The exception thrown by {@link timestamp} if UUID parsing fails. */
 export class ParseError extends Error {
   public readonly name = 'ParseError';
 }
 
-const getTime = (time: Clock | Time | GenerateOptions | null | undefined): number => {
+const getTime = (time: Clock | Time | Options | null | undefined): number => {
   if (time == null) return Date.now();
   if (typeof time === 'number') return time;
   if (time instanceof Date) return +time;
@@ -143,13 +234,6 @@ const getTime = (time: Clock | Time | GenerateOptions | null | undefined): numbe
   return getTime(time.time);
 };
 
-const hex = (n: number, width = 2) => pad(n.toString(16), width);
-
-const pad = (text: string, width: number) => {
-  const remainder = width - text.length;
-  return remainder > 0 ? '0'.repeat(remainder) + text : text;
-};
-
-const defaultEntropy = (): Uint8Array => crypto.getRandomValues(new Uint8Array(10));
+const hex = (n: number, width = 2) => n.toString(16).padStart(width, '0');
 
 const variant = 2 << 6;
