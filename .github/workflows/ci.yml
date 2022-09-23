@@ -95,7 +95,7 @@ jobs:
       - name: Install module
         run: >-
           mkdir -p node_modules &&
-          ln -s ../.. node_modules/uuid7
+          ln -s ../.. node_modules/ui7
         working-directory: smoke
 
       - name: Run via ESM

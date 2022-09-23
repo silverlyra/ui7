@@ -1,6 +1,6 @@
 /* eslint-env node */
 
-import uuid, { generator, timestamp } from 'uuid7';
+import uuid, { generator, timestamp } from 'ui7';
 
 const id = uuid();
 console.log(id);
