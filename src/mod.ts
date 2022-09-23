@@ -143,12 +143,7 @@ const getTime = (time: Clock | Time | GenerateOptions | null | undefined): numbe
   return getTime(time.time);
 };
 
-const hex = (n: number, width = 2) => pad(n.toString(16), width);
-
-const pad = (text: string, width: number) => {
-  const remainder = width - text.length;
-  return remainder > 0 ? '0'.repeat(remainder) + text : text;
-};
+const hex = (n: number, width = 2) => n.toString(16).padStart(width, '0');
 
 const defaultEntropy = (): Uint8Array => crypto.getRandomValues(new Uint8Array(10));
 
