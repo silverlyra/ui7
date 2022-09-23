@@ -1,0 +1,73 @@
+{
+  "name": "uuid7",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Generate sortable, timestamped UUID's, based on the new-uuid-format-04 RFC draft",
+  "type": "module",
+  "main": "dist/cjs/mod.cjs",
+  "module": "dist/esm/mod.js",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/mod.js",
+      "require": "./dist/cjs/mod.cjs"
+    }
+  },
+  "types": "dist/esm/mod.d.ts",
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "npm run clean && concurrently \"npm:build:*\"",
+    "build:esm": "esbuild --outdir=dist/esm --format=esm --sourcemap --inject:shim/esm/crypto.js src/mod.ts",
+    "build:cjs": "esbuild --outfile=dist/cjs/mod.cjs --format=cjs --sourcemap --inject:shim/cjs/crypto.js src/mod.ts",
+    "build:tsd": "tsc --project tsconfig.json --declaration --emitDeclarationOnly",
+    "check": "concurrently -c cyan,green,yellow,magenta \"npm:tsc\" \"npm:test\" \"npm:lint:check\" \"npm:fmt:check\"",
+    "tsc": "tsc --project tsconfig.json --noEmit",
+    "test": "ava",
+    "lint": "eslint \"src/**/*.{js,ts,tsx}\" --fix",
+    "lint:check": "eslint \"src/**/*.{js,ts,tsx}\" --max-warnings=0",
+    "fmt": "prettier --write src shim",
+    "fmt:check": "prettier --check src shim",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.38.0",
+    "@typescript-eslint/parser": "^5.38.0",
+    "ava": "^4.3.3",
+    "concurrently": "^7.4.0",
+    "esbuild": "^0.15.9",
+    "eslint-plugin-ava": "^13.2.0",
+    "prettier": "^2.7.1",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.3"
+  },
+  "engines": {
+    "node": ">=12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/silverlyra/uuid7.git"
+  },
+  "keywords": [
+    "uuid",
+    "uuid-v7"
+  ],
+  "author": "Lyra Naeseth <lyra@hey.com>",
+  "bugs": {
+    "url": "https://github.com/silverlyra/uuid7/issues"
+  },
+  "homepage": "https://github.com/silverlyra/uuid7#readme",
+  "files": [
+    "dist/",
+    "CHANGELOG.md"
+  ],
+  "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--loader=ts-node/esm",
+      "--experimental-global-webcrypto",
+      "--experimental-specifier-resolution=node"
+    ]
+  }
+}

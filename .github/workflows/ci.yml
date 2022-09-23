@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  NODE_NO_WARNINGS: '1'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [16, 18]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test -- --color
+
+  check:
+    name: Typecheck & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript
+        run: npm run tsc
+
+      - name: ESLint
+        run: npm run lint:check
+
+      - name: Prettier
+        run: npm run fmt:check
+
+      - name: Build
+        run: npm run build
+
+      - name: Save built package
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  smoke:
+    name: Validate
+    runs-on: ubuntu-latest
+    needs: [check]
+    strategy:
+      matrix:
+        node: [12, 14, 16, 18]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Save built package
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install module
+        run: >-
+          mkdir -p node_modules &&
+          ln -s ../.. node_modules/uuid7
+        working-directory: smoke
+
+      - name: Run via ESM
+        run: node index.mjs
+        working-directory: smoke
+        if: matrix.node > 12
+
+      - name: Run via CommonJS
+        run: node index.cjs
+        working-directory: smoke
