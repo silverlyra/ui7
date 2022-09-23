@@ -7,8 +7,7 @@ export const crypto =
   (function (crypto) {
     return {
       getRandomValues(array) {
-        array.set(crypto.randomBytes(array.length));
-        return array;
+        return crypto.randomFillSync(array);
       },
     };
   })(require('crypto'));
