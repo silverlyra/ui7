@@ -45,7 +45,7 @@ Node.js versions 12.0 and up are supported, and _ui7_ includes an ESM build. It 
 #### deno
 
 ```ts
-import uuid from "https://deno.land/x/ui7@v0.0.2/mod.ts";
+import uuid from "https://deno.land/x/ui7@v0.1.0/mod.ts";
 ```
 
 ## Usage
