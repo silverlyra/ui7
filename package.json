@@ -49,7 +49,8 @@
   },
   "keywords": [
     "uuid",
-    "uuid-v7"
+    "uuidv7",
+    "id-generator"
   ],
   "author": "Lyra Naeseth <lyra@lyra.codes>",
   "bugs": {
