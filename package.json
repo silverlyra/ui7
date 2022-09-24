@@ -1,5 +1,5 @@
 {
-  "name": "uuid7",
+  "name": "ui7",
   "version": "0.0.2",
   "license": "MIT",
   "description": "Generate sortable, timestamped UUID's, based on the new-uuid-format-04 RFC draft",
@@ -45,17 +45,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/silverlyra/uuid7.git"
+    "url": "https://github.com/silverlyra/ui7.git"
   },
   "keywords": [
     "uuid",
     "uuid-v7"
   ],
-  "author": "Lyra Naeseth <lyra@hey.com>",
+  "author": "Lyra Naeseth <lyra@lyra.codes>",
   "bugs": {
-    "url": "https://github.com/silverlyra/uuid7/issues"
+    "url": "https://github.com/silverlyra/ui7/issues"
   },
-  "homepage": "https://github.com/silverlyra/uuid7#readme",
+  "homepage": "https://github.com/silverlyra/ui7#readme",
   "files": [
     "dist/",
     "CHANGELOG.md"
