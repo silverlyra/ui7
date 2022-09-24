@@ -106,3 +106,48 @@ jobs:
       - name: Run via CommonJS
         run: node index.cjs
         working-directory: smoke
+
+  benchmark:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    needs: [check]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Save built package
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist/
+
+      - name: Run benchmark
+        run: >-
+          cd benchmark &&
+          npm ci &&
+          node index.mjs | tee results.txt
+
+      - name: Download previous benchmark data
+        uses: actions/cache@v3
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+
+      - name: Results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'benchmarkjs'
+          output-file-path: benchmark/results.txt
+          external-data-json-path: ./cache/benchmark-data.json
+          alert-threshold: 125%
+          comment-on-alert: true
+          comment-always: true
+          fail-on-alert: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
