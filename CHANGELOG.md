@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.0 (2022-09-24) _unreleased_
+## v0.2.0 (2022-09-24)
 
 - Added `bufferedRandom`, which calls `crypto.getRandomBytes` in blocks instead of on every UUID generation call, to improve performance significantly.
 - Changed the signature of `EntropySource` to accept the number of desired random bytes.
