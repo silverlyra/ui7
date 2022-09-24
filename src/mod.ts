@@ -38,7 +38,7 @@ export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
   if (dashes) timestamp = timestamp.slice(0, 8) + '-' + timestamp.slice(8);
 
   const suffixBytes: string[] = Array(10);
-  rand(time).forEach((b, i) => {
+  rand(10, time).forEach((b, i) => {
     if (i === 0) {
       b = version | (b & 0x0f);
     } else if (i === 2) {
@@ -166,11 +166,52 @@ export interface FormatOptions {
 }
 
 /**
- * A source for the `rand` fields of a UUID.
+ * A source for the `rand` fields of a UUID. To implement monotonic or other
+ * counter-based `rand` fields, the UUID's `timestamp` is provided.
  *
- * Must return a `Uint8Array` of 10 bytes.
+ * Must return a `Uint8Array` of `size` bytes.
  */
-export type EntropySource = (timestamp: number) => Uint8Array;
+export type EntropySource = (size: number, timestamp: number) => Uint8Array;
+
+/**
+ * A buffered `EntropySource`. To reduce overhead, `bufferedRandom` calls the
+ * underlying `getRandomValues` in chunks of `blockSize`, returning the
+ * already-generated random bytes for future reads until the block is exhausted.
+ */
+export const bufferedRandom = (blockSize = 200): EntropySource => {
+  let bytes: Uint8Array | undefined;
+  let buffer: ArrayBuffer;
+  let pos: number;
+
+  return (size: number) => {
+    if (size > blockSize) {
+      bytes = undefined;
+      blockSize = size;
+    }
+    if (!bytes) {
+      bytes = new Uint8Array(blockSize);
+      buffer = bytes.buffer;
+
+      crypto.getRandomValues(bytes);
+      pos = 0;
+    }
+
+    let next = pos + size;
+    if (next >= blockSize) {
+      const leftover = blockSize - pos;
+      bytes.copyWithin(0, pos);
+
+      crypto.getRandomValues(new Uint8Array(buffer, leftover));
+      pos = 0;
+      next = size;
+    }
+
+    const result = new Uint8Array(buffer, pos, size);
+    pos = next;
+
+    return result;
+  };
+};
 
 /**
  * Fill the UUID's `rand` fields with random bits, using
@@ -180,7 +221,7 @@ export type EntropySource = (timestamp: number) => Uint8Array;
  *
  * [random]: https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
  */
-export const random = () => crypto.getRandomValues(new Uint8Array(10));
+export const random = bufferedRandom();
 
 /**
  * Return an entropy source that allocates 12 bits as a monotonic counter at the
@@ -194,16 +235,16 @@ export const random = () => crypto.getRandomValues(new Uint8Array(10));
  * **Note:** This package does not currently handle overflow of the counter
  * field; after `0xFFF`, the next value is `0x000`.
  */
-export const monotonic = (): EntropySource => {
+export const monotonic = (entropy: EntropySource = random): EntropySource => {
   const bytes = new Uint8Array(10);
-  const entropy = new Uint8Array(bytes.buffer, 2, 8);
+  const randomBytes = new Uint8Array(bytes.buffer, 2, 8);
 
   let lastTimestamp = 0;
   let seq: number | undefined;
 
   return (timestamp) => {
     if (timestamp > lastTimestamp) {
-      crypto.getRandomValues(bytes);
+      bytes.set(entropy(10, timestamp));
       bytes[0] &= 0x07;
 
       lastTimestamp = timestamp;
@@ -212,7 +253,7 @@ export const monotonic = (): EntropySource => {
       if (seq === undefined) seq = ((bytes[0] & 0x0f) << 8) | bytes[1];
       seq++; // TODO: handle overflow
 
-      crypto.getRandomValues(entropy);
+      randomBytes.set(entropy(8, timestamp));
       bytes[0] = (seq >> 8) & 0xff;
       bytes[1] = seq & 0xff;
     }
