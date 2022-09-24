@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.1 _unreleased_
+
+- Fixed the generation of monotonic UUID’s.
+
 ## v0.2.0 (2022-09-24)
 
 - Added `bufferedRandom`, which calls `crypto.getRandomBytes` in blocks instead of on every UUID generation call, to improve performance significantly.
