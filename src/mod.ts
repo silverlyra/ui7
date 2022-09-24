@@ -236,13 +236,18 @@ export const random = bufferedRandom();
  * field; after `0xFFF`, the next value is `0x000`.
  */
 export const monotonic = (entropy: EntropySource = random): EntropySource => {
-  const bytes = new Uint8Array(10);
-  const randomBytes = new Uint8Array(bytes.buffer, 2, 8);
+  let bytes = new Uint8Array(10);
+  let randomBytes = new Uint8Array(bytes.buffer, 2);
 
   let lastTimestamp = 0;
   let seq: number | undefined;
 
-  return (timestamp) => {
+  return (size, timestamp) => {
+    if (bytes.byteLength !== size) {
+      bytes = new Uint8Array(size);
+      randomBytes = new Uint8Array(bytes.buffer, 2);
+    }
+
     if (timestamp > lastTimestamp) {
       bytes.set(entropy(10, timestamp));
       bytes[0] &= 0x07;
