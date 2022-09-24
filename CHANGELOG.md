@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.1 _unreleased_
+## v0.2.1 (2022-09-24)
 
 - Fixed the generation of monotonic UUID’s.
 
