@@ -3,7 +3,7 @@ ui7
 
 [![npm](https://img.shields.io/npm/v/ui7?color=gray&label=%20&logo=npm)][npm]
 [![deno.land](https://img.shields.io/github/v/tag/silverlyra/ui7?color=gray&label=%20&logo=deno&sort=semver)][deno]
-[![CI](https://img.shields.io/github/actions/workflow/status/status/silverlyra/ui7/ci.yml?branch=main&label=%20&logo=github)][build]
+[![CI](https://img.shields.io/github/actions/workflow/status/silverlyra/ui7/ci.yml&label=%20&logo=github)][build]
 [![includes TypeScript types](https://img.shields.io/npm/types/ui7?color=333&label=%20&logo=typescript&logoColor=58baee)][typescript]
 ![node-current](https://img.shields.io/node/v/ui7?color=444&label=%20&logo=node.js)
 [![MIT license](https://img.shields.io/npm/l/ui7?color=3ae)][license]
