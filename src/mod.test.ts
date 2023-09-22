@@ -38,6 +38,12 @@ test('generates monotonic UUIDs', (t) => {
   t.deepEqual(ids, sorted);
 });
 
+test('generates zero-entropy UUIDs', (t) => {
+  const time = 0x18abdfe4693;
+  t.is(uuid({ time, entropy: 0 }), '018abdfe-4693-7000-8000-000000000000');
+  t.is(uuid({ time, entropy: 0xff }), '018abdfe-4693-7fff-bfff-ffffffffffff');
+});
+
 test('parses the timestamp field', (t) => {
   t.is(timestamp('017f22e2-79b0-7cc3-98c4-dc0c0c07398f'), 0x17f22e279b0);
   t.is(timestamp('017F22E2-79B0-7CC3-98C4-DC0C0C07398F'), 0x17f22e279b0);

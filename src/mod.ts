@@ -16,9 +16,9 @@
  *              `false` to omit them. (default: `true`)
  * - `upper`:   Capitalize the A-F characters in the UUID. (default: `false`)
  * - `version`: The value of the UUID `version` field (default: `7`)
- * - `entropy`: A function to generate the random part of the UUID. Must return
- *              a `Uint8Array` containing 10 bytes.
- *              (default: uses `crypto.getRandomValues`)
+ * - `entropy`: A {@link EntropySource function} to generate the random part of
+ *              the UUID; or `0` or `0xFF` to set all "random" bits in the UUID
+ *              uniformly. (default: uses `crypto.getRandomValues`)
  */
 export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
   const time = getTime(opt);
@@ -31,7 +31,11 @@ export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
     if (opt.dashes != null) dashes = opt.dashes;
     if (opt.version != null) version = (opt.version & 0x0f) << 4;
     if (opt.upper != null) upper = opt.upper;
-    if (opt.entropy != null) rand = opt.entropy;
+    if (opt.entropy != null)
+      rand =
+        opt.entropy === 0 || opt.entropy === 0xff
+          ? constantEntropy(opt.entropy)
+          : opt.entropy;
   }
 
   let timestamp = hex(time, 12);
@@ -54,6 +58,10 @@ export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
     : timestamp + suffix;
 
   return upper ? id.toUpperCase() : id;
+
+  function constantEntropy(k: EntropyOptions['entropy'] & number): EntropySource {
+    return (n) => new Uint8Array(n).map(() => k);
+  }
 };
 
 export default v7;
@@ -123,31 +131,29 @@ export type Clock = typeof Date['now'];
 export type Time = number | Date;
 
 /** {@link v7 UUID generation} options. */
-export interface Options extends FormatOptions {
+export interface Options extends EntropyOptions, FormatOptions {
   /**
    * Set the timestamp portion of the UUID to the given `Date`, UNIX timestamp
    * (as returned by `Date.now`), or the timestamp returned by the given
    * {@link Clock clock function}.
    */
   time?: Clock | Time;
-
-  /**
-   * Generate the random part of the UUID. The returned `Uint8Array` must be at
-   * least 10 bytes long.
-   */
-  entropy?: EntropySource;
 }
 
 /** Configures a UUID {@link generator}. */
-export interface GeneratorOptions extends FormatOptions {
+export interface GeneratorOptions extends EntropyOptions, FormatOptions {
   /** Use a different timestamp source than `Date.now`. */
   time?: Clock;
+}
 
+/** Configures how the "random" fields of a generated UUID are populated. */
+export interface EntropyOptions {
   /**
-   * Generate the random part of the UUID. The returned `Uint8Array` must be at
-   * least 10 bytes long.
+   * A {@link EntropySource function} to generate the random part of the UUID;
+   * or `0` or `0xFF` to set all "random" bits in the UUID uniformly. (default:
+   * uses `crypto.getRandomValues`)
    */
-  entropy?: EntropySource;
+  entropy?: EntropySource | 0 | 0xff;
 }
 
 /** Configures how a generated UUID is formatted. */
@@ -256,7 +262,7 @@ export const monotonic = (entropy: EntropySource = random): EntropySource => {
       seq = undefined;
     } else {
       if (seq === undefined) seq = ((bytes[0] & 0x0f) << 8) | bytes[1];
-      seq++; // TODO: handle overflow
+      seq++; // NOTE: may overflow; will truncate back to 0
 
       randomBytes.set(entropy(8, timestamp));
       bytes[0] = (seq >> 8) & 0xff;
