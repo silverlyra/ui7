@@ -41,6 +41,7 @@ test('generates monotonic UUIDs', (t) => {
 test('generates zero-entropy UUIDs', (t) => {
   const time = 0x18abdfe4693;
   t.is(uuid({ time, entropy: 0 }), '018abdfe-4693-7000-8000-000000000000');
+  t.is(uuid({ time, entropy: 0xff }), '018abdfe-4693-7fff-bfff-ffffffffffff');
 });
 
 test('parses the timestamp field', (t) => {

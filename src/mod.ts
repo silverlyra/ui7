@@ -17,8 +17,8 @@
  * - `upper`:   Capitalize the A-F characters in the UUID. (default: `false`)
  * - `version`: The value of the UUID `version` field (default: `7`)
  * - `entropy`: A {@link EntropySource function} to generate the random part of
- *              the UUID, or `0` to set all random bits in the UUID to 0.
- *              (default: uses `crypto.getRandomValues`)
+ *              the UUID; or `0` or `0xFF` to set all "random" bits in the UUID
+ *              uniformly. (default: uses `crypto.getRandomValues`)
  */
 export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
   const time = getTime(opt);
@@ -32,7 +32,10 @@ export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
     if (opt.version != null) version = (opt.version & 0x0f) << 4;
     if (opt.upper != null) upper = opt.upper;
     if (opt.entropy != null)
-      rand = opt.entropy !== 0 ? opt.entropy : (n) => new Uint8Array(n);
+      rand =
+        opt.entropy === 0 || opt.entropy === 0xff
+          ? constantEntropy(opt.entropy)
+          : opt.entropy;
   }
 
   let timestamp = hex(time, 12);
@@ -55,6 +58,10 @@ export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
     : timestamp + suffix;
 
   return upper ? id.toUpperCase() : id;
+
+  function constantEntropy(k: EntropyOptions['entropy'] & number): EntropySource {
+    return (n) => new Uint8Array(n).map(() => k);
+  }
 };
 
 export default v7;
