@@ -16,8 +16,8 @@
  *              `false` to omit them. (default: `true`)
  * - `upper`:   Capitalize the A-F characters in the UUID. (default: `false`)
  * - `version`: The value of the UUID `version` field (default: `7`)
- * - `entropy`: A function to generate the random part of the UUID. Must return
- *              a `Uint8Array` containing 10 bytes.
+ * - `entropy`: A {@link EntropySource function} to generate the random part of
+ *              the UUID, or `0` to set all random bits in the UUID to 0.
  *              (default: uses `crypto.getRandomValues`)
  */
 export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
@@ -31,7 +31,8 @@ export const v7: Generator = (opt?: Clock | Time | Options | null): string => {
     if (opt.dashes != null) dashes = opt.dashes;
     if (opt.version != null) version = (opt.version & 0x0f) << 4;
     if (opt.upper != null) upper = opt.upper;
-    if (opt.entropy != null) rand = opt.entropy;
+    if (opt.entropy != null)
+      rand = opt.entropy !== 0 ? opt.entropy : (n) => new Uint8Array(n);
   }
 
   let timestamp = hex(time, 12);
@@ -135,7 +136,7 @@ export interface Options extends FormatOptions {
    * Generate the random part of the UUID. The returned `Uint8Array` must be at
    * least 10 bytes long.
    */
-  entropy?: EntropySource;
+  entropy?: EntropySource | 0;
 }
 
 /** Configures a UUID {@link generator}. */
