@@ -131,31 +131,29 @@ export type Clock = typeof Date['now'];
 export type Time = number | Date;
 
 /** {@link v7 UUID generation} options. */
-export interface Options extends FormatOptions {
+export interface Options extends EntropyOptions, FormatOptions {
   /**
    * Set the timestamp portion of the UUID to the given `Date`, UNIX timestamp
    * (as returned by `Date.now`), or the timestamp returned by the given
    * {@link Clock clock function}.
    */
   time?: Clock | Time;
-
-  /**
-   * Generate the random part of the UUID. The returned `Uint8Array` must be at
-   * least 10 bytes long.
-   */
-  entropy?: EntropySource | 0;
 }
 
 /** Configures a UUID {@link generator}. */
-export interface GeneratorOptions extends FormatOptions {
+export interface GeneratorOptions extends EntropyOptions, FormatOptions {
   /** Use a different timestamp source than `Date.now`. */
   time?: Clock;
+}
 
+/** Configures how the "random" fields of a generated UUID are populated. */
+export interface EntropyOptions {
   /**
-   * Generate the random part of the UUID. The returned `Uint8Array` must be at
-   * least 10 bytes long.
+   * A {@link EntropySource function} to generate the random part of the UUID;
+   * or `0` or `0xFF` to set all "random" bits in the UUID uniformly. (default:
+   * uses `crypto.getRandomValues`)
    */
-  entropy?: EntropySource;
+  entropy?: EntropySource | 0 | 0xff;
 }
 
 /** Configures how a generated UUID is formatted. */
@@ -264,7 +262,7 @@ export const monotonic = (entropy: EntropySource = random): EntropySource => {
       seq = undefined;
     } else {
       if (seq === undefined) seq = ((bytes[0] & 0x0f) << 8) | bytes[1];
-      seq++; // TODO: handle overflow
+      seq++; // NOTE: may overflow; will truncate back to 0
 
       randomBytes.set(entropy(8, timestamp));
       bytes[0] = (seq >> 8) & 0xff;
