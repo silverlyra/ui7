@@ -202,7 +202,6 @@ const id4 = uuid({
   }
 });
 // "01836dbd-448c-7000-8183-6dbd448c0000"
-
 ```
 
 Note that the default implementation avoids making a `getRandomValues` call every time `entropy()` is called; it makes larger, less infrequent reads to improve performance when many UUID's are being generated.
