@@ -14,10 +14,10 @@ ui7
 [typescript]: https://deno.land/x/ui7/mod.ts
 [license]: ./LICENSE
 
-A small [UUIDv7][] generator, targeting a [proposed][] update to [RFC 4122][]. v7 UUID’s are lexically sortable by their included timestamp.
+A small [UUIDv7][] generator, targeting a [proposed][bis] update to [RFC 4122][]. v7 UUID’s are lexically sortable by their included timestamp.
 
 [UUIDV7]: https://datatracker.ietf.org/doc/html/draft-ietf-uuidrev-rfc4122bis-11#name-uuid-version-7
-[latest draft]: https://datatracker.ietf.org/doc/draft-ietf-uuidrev-rfc4122bis/
+[bis]: https://datatracker.ietf.org/doc/draft-ietf-uuidrev-rfc4122bis/
 [RFC 4122]: https://datatracker.ietf.org/doc/html/rfc4122
 
 ```js
