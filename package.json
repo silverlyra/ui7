@@ -1,6 +1,6 @@
 {
   "name": "ui7",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "license": "MIT",
   "description": "Generate sortable, timestamped UUID's, based on the new-uuid-format-04 RFC draft",
   "type": "module",

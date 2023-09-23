@@ -14,10 +14,10 @@ ui7
 [typescript]: https://deno.land/x/ui7/mod.ts
 [license]: ./LICENSE
 
-A small [UUIDv7][] generator, targeting the [latest draft][] update to [RFC 4122][]. v7 UUID’s are lexically sortable by their included timestamp.
+A small [UUIDv7][] generator, targeting a [proposed][] update to [RFC 4122][]. v7 UUID’s are lexically sortable by their included timestamp.
 
-[UUIDV7]: https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#name-uuid-version-7
-[latest draft]: https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html
+[UUIDV7]: https://datatracker.ietf.org/doc/html/draft-ietf-uuidrev-rfc4122bis-11#name-uuid-version-7
+[latest draft]: https://datatracker.ietf.org/doc/draft-ietf-uuidrev-rfc4122bis/
 [RFC 4122]: https://datatracker.ietf.org/doc/html/rfc4122
 
 ```js
@@ -178,8 +178,8 @@ import uuid from "ui7";
 const id1 = uuid({ entropy: 0 });
 // "018abdfe-4693-7000-8000-000000000000"
 
-const id2 = uuid({ entropy: 0xff })
-// "018abdfe-4693-7fff-bfff-ffffffffffff"
+const id2 = uuid({ entropy: 0xff });
+// "18abfe1-984b-7fff-bfff-ffffffffffff"
 ```
 
 Full control is available by providing an `entropy` function, which must return a [`Uint8Array`][u8a] with the requested `byteLength`:
@@ -219,7 +219,7 @@ import { generator } from "ui7";
 
 const uuid = generator({
   time: () => Math.trunc(Date.now() / 1000),
-  entropy: (n) => new Uint8Array(n).map(() => 0xFF),
+  entropy: 0xff,
   upper: true,
 });
 
